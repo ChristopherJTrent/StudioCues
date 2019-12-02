@@ -118,9 +118,16 @@ class masterWindow:
 		return outputString
 	def updateMasterWindowDanceQueueLabel(this):
 		this.danceQueueLabelText.set(this.createQueueLabelText())
+	def registerNewDance(this, Dance:str):
+		index = max(this.MasterDanceList.keys())+1
+		this.MasterDanceList[index]=Dance
+		this.DanceListbox.insert(index, Dance)
+		with (open('DanceSyles.list','a')) as listFile:
+			listFile.write('\n'+Dance)
 	def prep(this, root:Tk):
 		print(this.MasterDanceList)
 		this.listArea = Frame(root)
+		this.RegisterDanceArea = Frame(root)
 		this.DanceListbox = Listbox(this.listArea,
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])
