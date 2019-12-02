@@ -1,0 +1,10 @@
+[UI_UX]
+font_family = Helvetica
+font_size = 100
+currently_playing = Currently Playing:
+next_up = Coming up next:
+slave_window_background = #300A24
+slave_window_foreground = #FFFFFF
+master_window_background = #300A24
+master_window_foreground = #FFFFFF
+
