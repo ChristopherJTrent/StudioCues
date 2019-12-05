@@ -36,7 +36,11 @@ class masterWindow:
 		if not this.configuration.has_option('UI_UX','master_window_background'):
 			this.configuration.set('UI_UX','master_window_background',"#300A24")
 		if not this.configuration.has_option('UI_UX','master_window_foreground'):
-			this.configuration.set('UI_UX','master_window_foreground',"#FFFFFF")
+			this.configuration.set('UI_UX','master_window_foreground',"#FFFFFF")		
+		if not this.configuration.has_option('UI_UX','Data_Entry_Background'):
+			this.configuration.set('UI_UX','Data_Entry_Background',"#55113f")
+		if not this.configuration.has_option('UI_UX','Data_Entry_Foreground'):
+			this.configuration.set('UI_UX','Data_Entry_Foreground',"#FFFFFF")
 		this.configuration.write(configFile)
 		configFile.close()
 	def initSlaveWindow(this):
@@ -122,12 +126,30 @@ class masterWindow:
 		index = max(this.MasterDanceList.keys())+1
 		this.MasterDanceList[index]=Dance
 		this.DanceListbox.insert(index, Dance)
-		with (open('DanceSyles.list','a')) as listFile:
+		with (open('DanceStyles.list','a')) as listFile:
 			listFile.write('\n'+Dance)
+	def registerNewDanceTemp(this, Dance:str):
+		index = max(this.MasterDanceList.keys())+1
+		this.MasterDanceList[index] = Dance
+		this.DanceListbox.insert(index, Dance)
 	def prep(this, root:Tk):
 		print(this.MasterDanceList)
 		this.listArea = Frame(root)
 		this.RegisterDanceArea = Frame(root)
+		this.RegisterDanceActionArea = Frame(this.RegisterDanceArea)
+		this.RegisterDanceTextBox = Entry(this.RegisterDanceArea, 
+									bg=this.configuration['UI_UX']['Data_Entry_Background'],
+									fg = this.configuration['UI_UX']['Data_Entry_Foreground'])
+		this.RegisterDancePermanentButton = Button(this.RegisterDanceActionArea,
+												bg=this.configuration['UI_UX']['master_window_background'],
+												fg=this.configuration['UI_UX']['master_window_foreground'],
+												text="Add dance\n(Permanent)",
+												command=lambda:this.registerNewDance(this.RegisterDanceTextBox.get()))
+		this.RegisterDanceTemporaryButton = Button(this.RegisterDanceActionArea,
+												bg=this.configuration['UI_UX']['master_window_background'],
+												fg=this.configuration['UI_UX']['master_window_foreground'],
+												text="Add dance \n(Temp)",
+												command=lambda:this.registerNewDanceTemp(this.RegisterDanceTextBox.get()))
 		this.DanceListbox = Listbox(this.listArea,
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])
@@ -160,6 +182,11 @@ class masterWindow:
 										command=this.masterWindowRemoveLastAddedDanceCallback,
 										bg=this.configuration['UI_UX']['master_window_background'],
 										fg=this.configuration['UI_UX']['master_window_foreground'])
+		this.RegisterDancePermanentButton.pack(side=TOP, fill=BOTH, expand=1 )
+		this.RegisterDanceTemporaryButton.pack(side=TOP, fill=BOTH, expand=1 )
+		this.RegisterDanceTextBox.pack(side=LEFT, fill=BOTH, expand=1)
+		this.RegisterDanceActionArea.pack(side=LEFT, fill=BOTH, expand=1)
+		this.RegisterDanceArea.pack(side=TOP, fill=X, expand=0)
 		this.DanceListbox.pack(side=LEFT, fill=BOTH,expand=1)
 		this.danceQueueLabel.pack(side=LEFT,fill=BOTH,expand=0)
 		this.AddDanceButton.pack(side=LEFT,fill=X, expand=1)
