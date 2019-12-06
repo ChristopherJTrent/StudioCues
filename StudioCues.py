@@ -4,7 +4,9 @@ from queue import Queue
 
 class masterWindow:
 	configuration = ""
+
 	def __init__(this,master=None):
+		this.fs = False
 		this.SlaveWindow = Toplevel(master)
 		this.danceQueue = []
 		this.doConfigRead()
@@ -12,11 +14,13 @@ class masterWindow:
 		this.MasterDanceList = this.getDanceStylesFromFile()
 		this.initSlaveWindow()
 		this.prep(master)
+
 	def doConfigRead(this):
 		configFile = open('StudioCues.configuration', 'r')
 		this.configuration = configparser.ConfigParser()
 		this.configuration.read_file(configFile)
 		configFile.close()
+
 	def writeDefaultConfigValuesIfNotPresent(this): 
 		configFile = open('StudioCues.configuration','w')
 		if not this.configuration.has_section('UI_UX'):
@@ -24,7 +28,10 @@ class masterWindow:
 		if not this.configuration.has_option('UI_UX','font_family'):
 			this.configuration.set('UI_UX','font_family','Helvetica')
 		if not this.configuration.has_option('UI_UX','font_size'):
-			this.configuration.set('UI_UX','font_size','100')
+			this.configuration.set('UI_UX','font_size','110')		
+		if not this.configuration.has_option('UI_UX','font_size_small'):
+			this.configuration.set('UI_UX','font_size_small','80')
+
 		if not this.configuration.has_option('UI_UX','currently_playing'):
 			this.configuration.set('UI_UX','currently_playing','Currently Playing:')
 		if not this.configuration.has_option('UI_UX','next_up'):
@@ -33,6 +40,10 @@ class masterWindow:
 			this.configuration.set('UI_UX','slave_window_background','#300A24')
 		if not this.configuration.has_option('UI_UX','slave_window_foreground'):
 			this.configuration.set('UI_UX','slave_window_foreground',"#FFFFFF")
+		if not this.configuration.has_option('UI_UX','slave_window_active_background'):
+			this.configuration.set('UI_UX','slave_window_active_background','#300A24')
+		if not this.configuration.has_option('UI_UX','slave_window_active_foreground'):
+			this.configuration.set('UI_UX','slave_window_active_foreground',"#FFC83D")
 		if not this.configuration.has_option('UI_UX','master_window_background'):
 			this.configuration.set('UI_UX','master_window_background',"#300A24")
 		if not this.configuration.has_option('UI_UX','master_window_foreground'):
@@ -43,38 +54,57 @@ class masterWindow:
 			this.configuration.set('UI_UX','Data_Entry_Foreground',"#FFFFFF")
 		this.configuration.write(configFile)
 		configFile.close()
+
 	def initSlaveWindow(this):
-		this.CurrentDanceInfoLabel = Label(this.SlaveWindow,
-										 bg=this.configuration['UI_UX']['slave_window_background'],
-										 fg=this.configuration['UI_UX']['slave_window_foreground'],
-										 font=(this.configuration['UI_UX']['font_family'],
-												this.configuration['UI_UX']['font_size']),
-										 text=this.configuration['UI_UX']['currently_playing'])
 		this.CurrentDance = StringVar()
 		this.CurrentDanceLabel = Label(this.SlaveWindow,
-									bg=this.configuration['UI_UX']['slave_window_background'],
-									fg=this.configuration['UI_UX']['slave_window_foreground'],
+									bg=this.configuration['UI_UX']['slave_window_active_background'],
+									fg=this.configuration['UI_UX']['slave_window_active_foreground'],
 									font=(this.configuration['UI_UX']['font_family'],
 										this.configuration['UI_UX']['font_size']),
 									textvariable=this.CurrentDance)
-		this.NextDanceInfoLabel = Label(this.SlaveWindow,
+		this.nextDance1 = StringVar()
+		this.nextDance2 = StringVar()
+		this.nextDance3 = StringVar()
+		this.nextDance4 = StringVar()
+		#this.NextDanceInfoLabel = Label(this.SlaveWindow,
+		#							bg=this.configuration['UI_UX']['slave_window_background'],
+		#							fg=this.configuration['UI_UX']['slave_window_foreground'],
+		#							font=(this.configuration['UI_UX']['font_family'],
+		#								this.configuration['UI_UX']['font_size']),
+		#							text=this.configuration['UI_UX']['next_up'])
+		this.NextDanceLabel1 = Label(this.SlaveWindow,
 									bg=this.configuration['UI_UX']['slave_window_background'],
 									fg=this.configuration['UI_UX']['slave_window_foreground'],
 									font=(this.configuration['UI_UX']['font_family'],
-										this.configuration['UI_UX']['font_size']),
-									text=this.configuration['UI_UX']['next_up'])
-		this.NextDance = StringVar()
-		this.NextDanceLabel = Label(this.SlaveWindow,
+								 		this.configuration['UI_UX']['font_size_small']),
+									textvariable=this.nextDance1)		
+		this.NextDanceLabel2 = Label(this.SlaveWindow,
 									bg=this.configuration['UI_UX']['slave_window_background'],
 									fg=this.configuration['UI_UX']['slave_window_foreground'],
 									font=(this.configuration['UI_UX']['font_family'],
-										this.configuration['UI_UX']['font_size']),
-									textvariable=this.NextDance)
-		this.CurrentDanceInfoLabel.pack(fill=BOTH, expand=1)
+										this.configuration['UI_UX']['font_size_small']),
+									textvariable=this.nextDance2)		
+		this.NextDanceLabel3 = Label(this.SlaveWindow,
+									bg=this.configuration['UI_UX']['slave_window_background'],
+									fg=this.configuration['UI_UX']['slave_window_foreground'],
+									font=(this.configuration['UI_UX']['font_family'],
+									this.configuration['UI_UX']['font_size_small']),
+									textvariable=this.nextDance3)		
+		this.NextDanceLabel4 = Label(this.SlaveWindow,
+									bg=this.configuration['UI_UX']['slave_window_background'],
+									fg=this.configuration['UI_UX']['slave_window_foreground'],
+									font=(this.configuration['UI_UX']['font_family'],
+									this.configuration['UI_UX']['font_size_small']),
+									textvariable=this.nextDance4)
+		#this.CurrentDanceInfoLabel.pack(fill=BOTH, expand=1)
 		this.CurrentDanceLabel.pack(fill=BOTH,expand=1)
-		this.NextDanceInfoLabel.pack(fill=BOTH,expand=1)
-		this.NextDanceLabel.pack(fill=BOTH, expand=1)
-		pass
+		#this.NextDanceInfoLabel.pack(fill=BOTH,expand=1)
+		this.NextDanceLabel1.pack(fill=BOTH, expand=1)
+		this.NextDanceLabel2.pack(fill=BOTH, expand=1)
+		this.NextDanceLabel3.pack(fill=BOTH, expand=1)
+		this.NextDanceLabel4.pack(fill=BOTH, expand=1)
+
 	def getDanceStylesFromFile(self) -> dict:
 		outDictionary = {}
 		iterator = 0
@@ -87,54 +117,85 @@ class masterWindow:
 			iterator += 1
 		dances.close()
 		return outDictionary
+	##UPDATE
 	def addDanceToQueue(this, Dance:str):
 		if this.CurrentDance.get() == "":
 			this.CurrentDance.set(Dance)
-		elif this.NextDance.get()=="":
-			this.NextDance.set(Dance)
+		elif this.nextDance1.get() == "":
+			this.nextDance1.set(Dance)
+		elif this.nextDance2.get() == "":
+			this.nextDance2.set(Dance)		
+		elif this.nextDance3.get() == "":
+			this.nextDance3.set(Dance)		
+		elif this.nextDance4.get() == "":
+			this.nextDance4.set(Dance)
 		else:
 			this.danceQueue.append(Dance)
 		this.updateMasterWindowDanceQueueLabel()
+	##UPDATE
 	def advanceDanceQueue(this):
-		this.CurrentDance.set(this.NextDance.get())
-		if len(this.danceQueue)==0:
-			this.NextDance.set("")
+		this.CurrentDance.set(this.nextDance1.get())
+		this.nextDance1.set(this.nextDance2.get())
+		this.nextDance2.set(this.nextDance3.get())
+		this.nextDance3.set(this.nextDance4.get())
+		if len(this.danceQueue) == 0:
+			this.nextDance4.set("")
 		else:
-			this.NextDance.set(this.danceQueue[0])
+			this.nextDance4.set(this.danceQueue[0])
 			del this.danceQueue[0]
 		this.updateMasterWindowDanceQueueLabel()
+	##UPDATE
 	def removeLastAddedDance(this):
-		if len(this.danceQueue)>=1:
-			del this.danceQueue[-1]
-		elif len(this.NextDance.get())!=0:
-			this.NextDance.set("")
-		elif len(this.CurrentDance.get())!=0:
+		if len(this.danceQueue) >= 1:
+			del this.danceQueue[-1]		
+		elif len(this.nextDance4.get())>0:
+			this.nextDance4.set("")	
+		elif len(this.nextDance3.get())>0:
+			this.nextDance3.set("")		
+		elif len(this.nextDance2.get())>0:
+			this.nextDance2.set("")		
+		elif len(this.nextDance1.get())>0:
+			this.nextDance1.set("")
+		elif len(this.CurrentDance.get())>0:
 			this.CurrentDance.set("")
 		this.updateMasterWindowDanceQueueLabel()
+	##UPDATE
 	def createQueueLabelText(this) -> str:
 		outputString = ""
 		outputString+= this.configuration['UI_UX']['currently_playing'] + '\n'
 		outputString+= this.CurrentDance.get() + '\n'
-		outputString+= this.configuration['UI_UX']['next_up'] + '\n'
-		outputString+= this.NextDance.get() + '\n'
+		outputString+= this.nextDance1.get() + '\n'
+		outputString+= this.nextDance2.get() + '\n'
+		outputString+= this.nextDance3.get() + '\n'
+		outputString+= this.nextDance4.get() + '\n'
 		for dance in this.danceQueue:
-			outputString+=dance+'\n'
+			outputString+=dance + '\n'
 		return outputString
+
 	def updateMasterWindowDanceQueueLabel(this):
 		this.danceQueueLabelText.set(this.createQueueLabelText())
 	def registerNewDance(this, Dance:str):
-		index = max(this.MasterDanceList.keys())+1
-		this.MasterDanceList[index]=Dance
-		this.DanceListbox.insert(index, Dance)
-		with (open('DanceStyles.list','a')) as listFile:
-			listFile.write('\n'+Dance)
-	def registerNewDanceTemp(this, Dance:str):
-		index = max(this.MasterDanceList.keys())+1
+		index = max(this.MasterDanceList.keys()) + 1
 		this.MasterDanceList[index] = Dance
 		this.DanceListbox.insert(index, Dance)
+		with (open('DanceStyles.list','a')) as listFile:
+			listFile.write('\n' + Dance)
+
+	def registerNewDanceTemp(this, Dance:str):
+		index = max(this.MasterDanceList.keys()) + 1
+		this.MasterDanceList[index] = Dance
+		this.DanceListbox.insert(index, Dance)
+
+	def doFullScreen(this):
+		if this.fs:
+			this.SlaveWindow.wm_attributes('-fullscreen','false')
+		else:
+			this.SlaveWindow.wm_attributes('-fullscreen','true')
+
 	def prep(this, root:Tk):
 		print(this.MasterDanceList)
 		this.listArea = Frame(root)
+
 		this.RegisterDanceArea = Frame(root)
 		this.RegisterDanceActionArea = Frame(this.RegisterDanceArea)
 		this.RegisterDanceTextBox = Entry(this.RegisterDanceArea, 
@@ -182,8 +243,8 @@ class masterWindow:
 										command=this.masterWindowRemoveLastAddedDanceCallback,
 										bg=this.configuration['UI_UX']['master_window_background'],
 										fg=this.configuration['UI_UX']['master_window_foreground'])
-		this.RegisterDancePermanentButton.pack(side=TOP, fill=BOTH, expand=1 )
-		this.RegisterDanceTemporaryButton.pack(side=TOP, fill=BOTH, expand=1 )
+		this.RegisterDancePermanentButton.pack(side=TOP, fill=BOTH, expand=1)
+		this.RegisterDanceTemporaryButton.pack(side=TOP, fill=BOTH, expand=1)
 		this.RegisterDanceTextBox.pack(side=LEFT, fill=BOTH, expand=1)
 		this.RegisterDanceActionArea.pack(side=LEFT, fill=BOTH, expand=1)
 		this.RegisterDanceArea.pack(side=TOP, fill=X, expand=0)
@@ -194,10 +255,13 @@ class masterWindow:
 		this.RemoveLastDanceButton.pack(side=LEFT, fill=X, expand=1)
 		this.listArea.pack(side=TOP,fill=BOTH,expand=1)
 		this.controlArea.pack(side=TOP,fill=BOTH,expand=0)
+
 	def masterWindowAddDanceCallback(this, index:int):
 		this.addDanceToQueue(index)
+
 	def masterWindowNextDanceCallback(this):
 		this.advanceDanceQueue()
+
 	def masterWindowRemoveLastAddedDanceCallback(this):
 		this.removeLastAddedDance()
 
