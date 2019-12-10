@@ -1,6 +1,7 @@
 from tkinter import *
+from tkinter import filedialog
 import configparser
-from queue import Queue
+import collections
 
 class masterWindow:
 	configuration = ""
@@ -8,7 +9,7 @@ class masterWindow:
 	def __init__(this,master=None):
 		this.fs = False
 		this.SlaveWindow = Toplevel(master)
-		this.danceQueue = []
+		this.danceQueue = collections.deque()
 		this.doConfigRead()
 		this.writeDefaultConfigValuesIfNotPresent()
 		this.MasterDanceList = this.getDanceStylesFromFile()
@@ -31,7 +32,6 @@ class masterWindow:
 			this.configuration.set('UI_UX','font_size','110')		
 		if not this.configuration.has_option('UI_UX','font_size_small'):
 			this.configuration.set('UI_UX','font_size_small','80')
-
 		if not this.configuration.has_option('UI_UX','currently_playing'):
 			this.configuration.set('UI_UX','currently_playing','Currently Playing:')
 		if not this.configuration.has_option('UI_UX','next_up'):
@@ -110,9 +110,7 @@ class masterWindow:
 		iterator = 0
 		dances = open('DanceStyles.list','r')
 		danceList = dances.read().split('\n')
-		print(danceList)
 		for dance in danceList:
-			print(dance)
 			outDictionary[iterator] = dance
 			iterator += 1
 		dances.close()
@@ -132,6 +130,16 @@ class masterWindow:
 		else:
 			this.danceQueue.append(Dance)
 		this.updateMasterWindowDanceQueueLabel()
+
+	def addDanceToTop(this, Dance:str):
+		this.danceQueue.appendleft(this.nextDance4.get())
+		this.nextDance4.set(this.nextDance3.get())
+		this.nextDance3.set(this.nextDance2.get())
+		this.nextDance2.set(this.nextDance1.get())
+		this.nextDance1.set(this.CurrentDance.get())
+		this.CurrentDance.set(Dance)
+		this.updateMasterWindowDanceQueueLabel()
+
 	##UPDATE
 	def advanceDanceQueue(this):
 		this.CurrentDance.set(this.nextDance1.get())
@@ -141,13 +149,12 @@ class masterWindow:
 		if len(this.danceQueue) == 0:
 			this.nextDance4.set("")
 		else:
-			this.nextDance4.set(this.danceQueue[0])
-			del this.danceQueue[0]
+			this.nextDance4.set(this.danceQueue.popleft())
 		this.updateMasterWindowDanceQueueLabel()
 	##UPDATE
 	def removeLastAddedDance(this):
 		if len(this.danceQueue) >= 1:
-			del this.danceQueue[-1]		
+			this.danceQueue.pop()	
 		elif len(this.nextDance4.get())>0:
 			this.nextDance4.set("")	
 		elif len(this.nextDance3.get())>0:
@@ -174,6 +181,7 @@ class masterWindow:
 
 	def updateMasterWindowDanceQueueLabel(this):
 		this.danceQueueLabelText.set(this.createQueueLabelText())
+
 	def registerNewDance(this, Dance:str):
 		index = max(this.MasterDanceList.keys()) + 1
 		this.MasterDanceList[index] = Dance
@@ -186,16 +194,49 @@ class masterWindow:
 		this.MasterDanceList[index] = Dance
 		this.DanceListbox.insert(index, Dance)
 
-	def doFullScreen(this):
-		if this.fs:
-			this.SlaveWindow.wm_attributes('-fullscreen','false')
-		else:
-			this.SlaveWindow.wm_attributes('-fullscreen','true')
+	def doFileOpenPopup(self, startDir:str = '/', title:str = 'Select a file...', fileTypes:tuple = (('StudioCues Queue files','*.sc'),('All Files','*.*'))) -> str:
+		return filedialog.askopenfilename(initialdir=startDir, title=title,filetypes=fileTypes)	
+
+	def doFileSavePopup(self, startDir:str = '/', title:str = 'Select a file...', fileTypes:tuple = (('StudioCues Queue files','*.sc'),('All Files','*.*'))) -> str:
+		return filedialog.asksaveasfilename(initialdir=startDir, title=title,filetypes=fileTypes)
+
+	def saveCurrentQueue(this):
+		location = this.doFileSavePopup()
+		if not location.lower().endswith('.sc'):
+			location+='.sc'
+		with open(location, 'w') as queueFile:
+			queueFile.write(this.CurrentDance.get()+'\n')
+			queueFile.write(this.nextDance1.get()+'\n')
+			queueFile.write(this.nextDance2.get()+'\n')
+			queueFile.write(this.nextDance3.get()+'\n')
+			queueFile.write(this.nextDance4.get()+'\n')
+			for v in this.danceQueue:
+				queueFile.write(v+'\n')
+	
+	def readQueueFile(this):
+		location = this.doFileOpenPopup()
+		with open(location,'r') as IOFile:
+			temp = IOFile.read().split('\n')
+			this.clearDanceQueue()
+			for dance in temp:
+				this.addDanceToQueue(dance)
+
+	def clearDanceQueue(this):
+		this.CurrentDance.set('')
+		this.nextDance1.set('')
+		this.nextDance2.set('')
+		this.nextDance3.set('')
+		this.nextDance4.set('')
+		this.danceQueue.clear()
 
 	def prep(this, root:Tk):
-		print(this.MasterDanceList)
+		this.menuBar = Menu(root)
+		this.FileMenu = Menu(this.menuBar, tearoff=0)
+		this.FileMenu.add_command(label='Save Queue',command=this.saveCurrentQueue)
+		this.FileMenu.add_command(label='Open Queue', command=this.readQueueFile)
+		this.menuBar.add_cascade(label="File",menu=this.FileMenu)
+		root.config(menu=this.menuBar)
 		this.listArea = Frame(root)
-
 		this.RegisterDanceArea = Frame(root)
 		this.RegisterDanceActionArea = Frame(this.RegisterDanceArea)
 		this.RegisterDanceTextBox = Entry(this.RegisterDanceArea, 
@@ -222,11 +263,19 @@ class masterWindow:
 		this.controlArea = Frame(root)
 		for key in this.MasterDanceList.keys():
 			this.DanceListbox.insert(key, this.MasterDanceList[key])
-		this.AddDanceButton = Button(this.controlArea, 
+		this.addDanceArea = Frame(this.controlArea)
+		this.AddDanceButton = Button(this.addDanceArea,
 							   text="Add to Queue", 
 							   relief=GROOVE, 
 							   height=7,
 							   command=lambda:this.masterWindowAddDanceCallback(this.DanceListbox.get(ACTIVE)),
+								bg=this.configuration['UI_UX']['master_window_background'],
+								fg=this.configuration['UI_UX']['master_window_foreground'])		
+		this.AddDanceToTopButton = Button(this.addDanceArea,
+							   text="Add to top \nof Queue", 
+							   relief=GROOVE, 
+							   height=7,
+							   command=lambda:this.addDanceToTop(this.DanceListbox.get(ACTIVE)),
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])
 		this.AdvanceDanceButton = Button(this.controlArea,
@@ -250,9 +299,11 @@ class masterWindow:
 		this.RegisterDanceArea.pack(side=TOP, fill=X, expand=0)
 		this.DanceListbox.pack(side=LEFT, fill=BOTH,expand=1)
 		this.danceQueueLabel.pack(side=LEFT,fill=BOTH,expand=0)
-		this.AddDanceButton.pack(side=LEFT,fill=X, expand=1)
-		this.AdvanceDanceButton.pack(side=LEFT, fill=X, expand=1)
-		this.RemoveLastDanceButton.pack(side=LEFT, fill=X, expand=1)
+		this.AddDanceToTopButton.pack(side=TOP,fill=BOTH, expand=0)
+		this.AddDanceButton.pack(side=TOP,fill=BOTH, expand=1)
+		this.addDanceArea.pack(side=LEFT, fill=X, expand=1)
+		this.AdvanceDanceButton.pack(side=LEFT, fill=BOTH, expand=1)
+		this.RemoveLastDanceButton.pack(side=LEFT, fill=BOTH, expand=1)
 		this.listArea.pack(side=TOP,fill=BOTH,expand=1)
 		this.controlArea.pack(side=TOP,fill=BOTH,expand=0)
 
