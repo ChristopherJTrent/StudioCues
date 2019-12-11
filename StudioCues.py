@@ -67,12 +67,6 @@ class masterWindow:
 		this.nextDance2 = StringVar()
 		this.nextDance3 = StringVar()
 		this.nextDance4 = StringVar()
-		#this.NextDanceInfoLabel = Label(this.SlaveWindow,
-		#							bg=this.configuration['UI_UX']['slave_window_background'],
-		#							fg=this.configuration['UI_UX']['slave_window_foreground'],
-		#							font=(this.configuration['UI_UX']['font_family'],
-		#								this.configuration['UI_UX']['font_size']),
-		#							text=this.configuration['UI_UX']['next_up'])
 		this.NextDanceLabel1 = Label(this.SlaveWindow,
 									bg=this.configuration['UI_UX']['slave_window_background'],
 									fg=this.configuration['UI_UX']['slave_window_foreground'],
@@ -97,9 +91,7 @@ class masterWindow:
 									font=(this.configuration['UI_UX']['font_family'],
 									this.configuration['UI_UX']['font_size_small']),
 									textvariable=this.nextDance4)
-		#this.CurrentDanceInfoLabel.pack(fill=BOTH, expand=1)
 		this.CurrentDanceLabel.pack(fill=BOTH,expand=1)
-		#this.NextDanceInfoLabel.pack(fill=BOTH,expand=1)
 		this.NextDanceLabel1.pack(fill=BOTH, expand=1)
 		this.NextDanceLabel2.pack(fill=BOTH, expand=1)
 		this.NextDanceLabel3.pack(fill=BOTH, expand=1)
@@ -140,7 +132,6 @@ class masterWindow:
 		this.CurrentDance.set(Dance)
 		this.updateMasterWindowDanceQueueLabel()
 
-	##UPDATE
 	def advanceDanceQueue(this):
 		this.CurrentDance.set(this.nextDance1.get())
 		this.nextDance1.set(this.nextDance2.get())
@@ -151,7 +142,7 @@ class masterWindow:
 		else:
 			this.nextDance4.set(this.danceQueue.popleft())
 		this.updateMasterWindowDanceQueueLabel()
-	##UPDATE
+
 	def removeLastAddedDance(this):
 		if len(this.danceQueue) >= 1:
 			this.danceQueue.pop()	
@@ -166,7 +157,7 @@ class masterWindow:
 		elif len(this.CurrentDance.get())>0:
 			this.CurrentDance.set("")
 		this.updateMasterWindowDanceQueueLabel()
-	##UPDATE
+
 	def createQueueLabelText(this) -> str:
 		outputString = ""
 		outputString+= this.configuration['UI_UX']['currently_playing'] + '\n'
@@ -222,6 +213,7 @@ class masterWindow:
 				this.addDanceToQueue(dance)
 
 	def clearDanceQueue(this):
+		##Go through each StringVar and set its value to an empty string, then clear the queue.
 		this.CurrentDance.set('')
 		this.nextDance1.set('')
 		this.nextDance2.set('')
@@ -229,14 +221,15 @@ class masterWindow:
 		this.nextDance4.set('')
 		this.danceQueue.clear()
 
-	def prep(this, root:Tk):
+	def createMenuBar(this, root:Tk):
 		this.menuBar = Menu(root)
 		this.FileMenu = Menu(this.menuBar, tearoff=0)
-		this.FileMenu.add_command(label='Save Queue',command=this.saveCurrentQueue)
-		this.FileMenu.add_command(label='Open Queue', command=this.readQueueFile)
+		this.FileMenu.add_command(label='Save Queue',underline=1,command=this.saveCurrentQueue)
+		this.FileMenu.add_command(label='Open Queue',underline=1, command=this.readQueueFile)
 		this.menuBar.add_cascade(label="File",menu=this.FileMenu)
 		root.config(menu=this.menuBar)
-		this.listArea = Frame(root)
+
+	def createDanceRegistrationArea(this, root:Tk):
 		this.RegisterDanceArea = Frame(root)
 		this.RegisterDanceActionArea = Frame(this.RegisterDanceArea)
 		this.RegisterDanceTextBox = Entry(this.RegisterDanceArea, 
@@ -252,6 +245,14 @@ class masterWindow:
 												fg=this.configuration['UI_UX']['master_window_foreground'],
 												text="Add dance \n(Temp)",
 												command=lambda:this.registerNewDanceTemp(this.RegisterDanceTextBox.get()))
+		this.RegisterDancePermanentButton.pack(side=TOP, fill=BOTH, expand=1)
+		this.RegisterDanceTemporaryButton.pack(side=TOP, fill=BOTH, expand=1)
+		this.RegisterDanceTextBox.pack(side=LEFT, fill=BOTH, expand=1)
+		this.RegisterDanceActionArea.pack(side=LEFT, fill=BOTH, expand=1)
+		this.RegisterDanceArea.pack(side=TOP, fill=X, expand=0)
+
+	def createDanceListArea(this, root:Tk):
+		this.listArea = Frame(root)
 		this.DanceListbox = Listbox(this.listArea,
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])
@@ -260,9 +261,14 @@ class masterWindow:
 		this.danceQueueLabel = Label(this.listArea, textvariable=this.danceQueueLabelText,
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])
-		this.controlArea = Frame(root)
 		for key in this.MasterDanceList.keys():
 			this.DanceListbox.insert(key, this.MasterDanceList[key])
+		this.DanceListbox.pack(side=LEFT, fill=BOTH,expand=1)
+		this.danceQueueLabel.pack(side=LEFT,fill=BOTH,expand=0)
+		this.listArea.pack(side=TOP,fill=BOTH,expand=1)
+
+	def createDanceControlArea(this, root:Tk):
+		this.controlArea = Frame(root)
 		this.addDanceArea = Frame(this.controlArea)
 		this.AddDanceButton = Button(this.addDanceArea,
 							   text="Add to Queue", 
@@ -292,20 +298,21 @@ class masterWindow:
 										command=this.masterWindowRemoveLastAddedDanceCallback,
 										bg=this.configuration['UI_UX']['master_window_background'],
 										fg=this.configuration['UI_UX']['master_window_foreground'])
-		this.RegisterDancePermanentButton.pack(side=TOP, fill=BOTH, expand=1)
-		this.RegisterDanceTemporaryButton.pack(side=TOP, fill=BOTH, expand=1)
-		this.RegisterDanceTextBox.pack(side=LEFT, fill=BOTH, expand=1)
-		this.RegisterDanceActionArea.pack(side=LEFT, fill=BOTH, expand=1)
-		this.RegisterDanceArea.pack(side=TOP, fill=X, expand=0)
-		this.DanceListbox.pack(side=LEFT, fill=BOTH,expand=1)
-		this.danceQueueLabel.pack(side=LEFT,fill=BOTH,expand=0)
 		this.AddDanceToTopButton.pack(side=TOP,fill=BOTH, expand=0)
 		this.AddDanceButton.pack(side=TOP,fill=BOTH, expand=1)
 		this.addDanceArea.pack(side=LEFT, fill=X, expand=1)
 		this.AdvanceDanceButton.pack(side=LEFT, fill=BOTH, expand=1)
 		this.RemoveLastDanceButton.pack(side=LEFT, fill=BOTH, expand=1)
-		this.listArea.pack(side=TOP,fill=BOTH,expand=1)
 		this.controlArea.pack(side=TOP,fill=BOTH,expand=0)
+	def prep(this, root:Tk):
+		this.createMenuBar(root)
+		this.createDanceRegistrationArea(root)
+		this.createDanceListArea(root)
+		this.createDanceControlArea(root)
+		this.registerKeyCommands(root)
+	def registerKeyCommands(this, root:Tk):
+		root.bind('<Control-o>', lambda event: this.readQueueFile())
+		root.bind('<Control-s>', lambda event: this.saveCurrentQueue())
 
 	def masterWindowAddDanceCallback(this, index:int):
 		this.addDanceToQueue(index)
