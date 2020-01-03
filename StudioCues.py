@@ -56,6 +56,7 @@ class masterWindow:
 		configFile.close()
 
 	def initSlaveWindow(this):
+		this.SlaveWindow.geometry("500x500")
 		this.CurrentDance = StringVar()
 		this.CurrentDanceLabel = Label(this.SlaveWindow,
 									bg=this.configuration['UI_UX']['slave_window_active_background'],
