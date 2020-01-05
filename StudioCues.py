@@ -1,13 +1,17 @@
 from tkinter import *
 from tkinter import filedialog
+import screeninfo
 import configparser
 import collections
 
 class masterWindow:
 	configuration = ""
-
+	version = "1.8.0"
 	def __init__(this,master=None):
 		this.fs = False
+		this.swHeight = 0
+		this.swWidth = 0
+		this.swFS = False
 		this.SlaveWindow = Toplevel(master)
 		this.danceQueue = collections.deque()
 		this.doConfigRead()
@@ -97,6 +101,10 @@ class masterWindow:
 		this.NextDanceLabel2.pack(fill=BOTH, expand=1)
 		this.NextDanceLabel3.pack(fill=BOTH, expand=1)
 		this.NextDanceLabel4.pack(fill=BOTH, expand=1)
+		for mon in screeninfo.screeninfo.get_monitors():
+			if mon.x > 0:
+				this.SlaveWindow.overrideredirect(1)
+				this.SlaveWindow.geometry("{0}x{1}+{2}+0".format(mon.width, mon.height, mon.x))
 
 	def getDanceStylesFromFile(self) -> dict:
 		outDictionary = {}
@@ -254,9 +262,14 @@ class masterWindow:
 
 	def createDanceListArea(this, root:Tk):
 		this.listArea = Frame(root)
+		this.DanceListboxScroll = Scrollbar(this.listArea,								
+									  bg=this.configuration['UI_UX']['master_window_background'])
+		this.DanceListboxScroll.pack(side=LEFT,fill=Y)
 		this.DanceListbox = Listbox(this.listArea,
 								bg=this.configuration['UI_UX']['master_window_background'],
-								fg=this.configuration['UI_UX']['master_window_foreground'])
+								fg=this.configuration['UI_UX']['master_window_foreground'],
+								yscrollcommand=this.DanceListboxScroll.set)
+		this.DanceListboxScroll.config(command=this.DanceListbox.yview)
 		this.danceQueueLabelText = StringVar(root)
 		this.danceQueueLabelText.set(this.createQueueLabelText())
 		this.danceQueueLabel = Label(this.listArea, textvariable=this.danceQueueLabelText,
@@ -324,6 +337,9 @@ class masterWindow:
 	def masterWindowRemoveLastAddedDanceCallback(this):
 		this.removeLastAddedDance()
 
-root = Tk()
-sl = masterWindow(root)
-root.mainloop()
+def main():
+	root = Tk()
+	master = masterWindow(root)
+	root.mainloop()
+
+main()

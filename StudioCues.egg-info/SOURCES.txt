@@ -1,0 +1,7 @@
+__setup__.py
+StudioCues.egg-info/PKG-INFO
+StudioCues.egg-info/SOURCES.txt
+StudioCues.egg-info/dependency_links.txt
+StudioCues.egg-info/not-zip-safe
+StudioCues.egg-info/requires.txt
+StudioCues.egg-info/top_level.txt

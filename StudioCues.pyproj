@@ -11,6 +11,9 @@
     <OutputPath>.</OutputPath>
     <Name>StudioCues</Name>
     <RootNamespace>StudioCues</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <CommandLineArguments>install</CommandLineArguments>
+    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,10 +25,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="StudioCues.py" />
+    <Compile Include="__setup__.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Content Include="DanceStyles.list" />
+    <Content Include="DanceStyles.list.OLD" />
     <Content Include="StudioCues.configuration" />
+    <Content Include="update.sh" />
+    <Content Include="UpdateNotes.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
