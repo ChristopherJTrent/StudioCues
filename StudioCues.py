@@ -8,14 +8,16 @@ class masterWindow:
 	configuration = ""
 	version = "1.8.0"
 	def __init__(this,master=None):
+		master.title("StudioCues")
+		this.doConfigRead()
+		this.writeDefaultConfigValuesIfNotPresent()
 		this.fs = False
 		this.swHeight = 0
 		this.swWidth = 0
 		this.swFS = False
 		this.SlaveWindow = Toplevel(master)
+		this.SlaveWindow.title("StudioCues Slave Window")
 		this.danceQueue = collections.deque()
-		this.doConfigRead()
-		this.writeDefaultConfigValuesIfNotPresent()
 		this.MasterDanceList = this.getDanceStylesFromFile()
 		this.initSlaveWindow()
 		this.prep(master)
@@ -24,22 +26,40 @@ class masterWindow:
 		configFile = open('StudioCues.configuration', 'r')
 		this.configuration = configparser.ConfigParser()
 		this.configuration.read_file(configFile)
+		for sect in this.configuration.keys():
+			print(sect,":")
+			for opt in this.configuration[sect].keys():
+				print('    '+opt+': '+this.configuration[sect][opt])
 		configFile.close()
 
 	def writeDefaultConfigValuesIfNotPresent(this): 
 		configFile = open('StudioCues.configuration','w')
 		if not this.configuration.has_section('UI_UX'):
 			this.configuration.add_section('UI_UX')
+		if not this.configuration.has_section('keybindings'):
+			this.configuration.add_section('keybindings')
+		if not this.configuration.has_section('startup'):
+			this.configuration.add_section('startup')
+		if not this.configuration.has_option('startup','defaultQueue'):
+			this.configuration.set('startup','defaultQueue',"none")
+		if not this.configuration.has_option('keybindings','savequeue'):
+			this.configuration.set('keybindings','savequeue','<Control-s>')
+		if not this.configuration.has_option('keybindings','openqueue'):
+			this.configuration.set('keybindings','openqueue','<Control-o>')
+		if not this.configuration.has_option('keybindings','enqueue'):
+			this.configuration.set('keybindings','enqueue','<Key-q>')
+		if not this.configuration.has_option('keybindings','enqueuetop'):
+			this.configuration.set('keybindings','enqueuetop','<Key-t>')
+		if not this.configuration.has_option('keybindings','advanceQueue'):
+			this.configuration.set('keybindings','advanceQueue','<Key-n>')
 		if not this.configuration.has_option('UI_UX','font_family'):
 			this.configuration.set('UI_UX','font_family','Helvetica')
+		if not this.configuration.has_option('UI_UX','currently_playing'):
+			this.configuration.set('UI_UX','currently_playing','Now Playing:')
 		if not this.configuration.has_option('UI_UX','font_size'):
 			this.configuration.set('UI_UX','font_size','110')		
 		if not this.configuration.has_option('UI_UX','font_size_small'):
 			this.configuration.set('UI_UX','font_size_small','80')
-		if not this.configuration.has_option('UI_UX','currently_playing'):
-			this.configuration.set('UI_UX','currently_playing','Currently Playing:')
-		if not this.configuration.has_option('UI_UX','next_up'):
-			this.configuration.set('UI_UX','next_up','Coming up next:')
 		if not this.configuration.has_option('UI_UX','slave_window_background'):
 			this.configuration.set('UI_UX','slave_window_background','#300A24')
 		if not this.configuration.has_option('UI_UX','slave_window_foreground'):
@@ -56,6 +76,10 @@ class masterWindow:
 			this.configuration.set('UI_UX','Data_Entry_Background',"#55113f")
 		if not this.configuration.has_option('UI_UX','Data_Entry_Foreground'):
 			this.configuration.set('UI_UX','Data_Entry_Foreground',"#FFFFFF")
+		for sect in this.configuration.keys():
+			print(sect,":")
+		for opt in this.configuration[sect].keys():
+			print('    '+opt+': '+this.configuration[sect][opt])
 		this.configuration.write(configFile)
 		configFile.close()
 
@@ -282,16 +306,16 @@ class masterWindow:
 		this.listArea.pack(side=TOP,fill=BOTH,expand=1)
 
 	def createDanceControlArea(this, root:Tk):
-		this.controlArea = Frame(root)
-		this.addDanceArea = Frame(this.controlArea)
-		this.AddDanceButton = Button(this.addDanceArea,
+		this.controlArea:Frame = Frame(root)
+		this.addDanceArea:Frame = Frame(this.controlArea)
+		this.AddDanceButton:Button = Button(this.addDanceArea,
 							   text="Add to Queue", 
 							   relief=GROOVE, 
 							   height=7,
 							   command=lambda:this.masterWindowAddDanceCallback(this.DanceListbox.get(ACTIVE)),
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])		
-		this.AddDanceToTopButton = Button(this.addDanceArea,
+		this.AddDanceToTopButton:Button = Button(this.addDanceArea,
 							   text="Add to top \nof Queue", 
 							   relief=GROOVE, 
 							   height=7,
@@ -325,8 +349,11 @@ class masterWindow:
 		this.createDanceControlArea(root)
 		this.registerKeyCommands(root)
 	def registerKeyCommands(this, root:Tk):
-		root.bind('<Control-o>', lambda event: this.readQueueFile())
-		root.bind('<Control-s>', lambda event: this.saveCurrentQueue())
+		root.bind(this.configuration['keybindings']['openqueue'], lambda event: this.readQueueFile())
+		root.bind(this.configuration['keybindings']['savequeue'], lambda event: this.saveCurrentQueue())
+		root.bind(this.configuration['keybindings']['enqueue'], lambda event:this.addDanceToQueue(this.DanceListbox.get(this.DanceListbox.curselection())))		
+		root.bind(this.configuration['keybindings']['enqueuetop'], lambda event:this.addDanceToTop(this.DanceListbox.get(this.DanceListbox.curselection())))
+		root.bind(this.configuration['keybindings']['advanceQueue'], lambda event:this.advanceDanceQueue())
 
 	def masterWindowAddDanceCallback(this, index:int):
 		this.addDanceToQueue(index)

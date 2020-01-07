@@ -1,3 +1,5 @@
 Version 1.8.0
 Added automatic borderless maximization of the secondary window
 Updated the default dance list to include International Standard, International Latin, American Smooth, and American Rhythm dances.
+Version 1.9.0
+Added shortcut keys to enque styles, enque to top, 

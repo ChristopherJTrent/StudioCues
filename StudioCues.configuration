@@ -1,15 +1,24 @@
 [UI_UX]
 font_family = Helvetica
-currently_playing = Currently Playing:
-next_up = Coming up next:
+font_size = 110
+font_size_small = 80
 slave_window_background = #300A24
 slave_window_foreground = #FFFFFF
-master_window_background = #55113f
+slave_window_active_background = #300A24
+slave_window_active_foreground = #FFC83D
+master_window_background = #300A24
 master_window_foreground = #FFFFFF
 data_entry_background = #55113f
 data_entry_foreground = #FFFFFF
-slave_window_active_background = #300A24
-slave_window_active_foreground = #FFC83D
-font_size_small = 80
-font_size = 120
+currently_playing = Now Playing:
+
+[startup]
+defaultqueue = none
+
+[keybindings]
+savequeue = <Control-s>
+openqueue = <Control-o>
+enqueue = <Key-q>
+enqueuetop = <Key-t>
+advancequeue = <Key-n>
 
