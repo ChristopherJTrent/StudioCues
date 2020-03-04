@@ -6,15 +6,44 @@ import collections
 
 class masterWindow:
 	configuration = ""
-	version = "1.8.0"
+	version = "2.0.0"	
+	
 	def __init__(this,master=None):
+		this.SlaveWindowDanceLists = {
+							    'current':{'content': StringVar(),'locked':False},
+								'next1':{'content':StringVar(),'locked':False},
+								'next2':{'content':StringVar(),'locked':False},
+								'next3':{'content':StringVar(),'locked':False},
+								'next4':{'content': StringVar(),'locked':False}}
+
+		this.defaultConfigOptions = {'UI_UX':{
+							'font_family':'Helvetica',
+							'font_size':'110',
+							'font_size_small':'80',
+							'listbox_font_size':'12',
+							'tablet_listbox_font_size':'40',
+							'slave_window_background':'#300A24',
+							'slave_window_foreground':'#FFFFFF',
+							'slave_window_active_background':'#300A24',
+							'slave_window_active_foreground':'#FFC83D',
+							'master_window_background':'#300A24',
+							'master_window_foreground':'#FFFFFF',
+							'data_entry_background':'#55113F',
+							'data_entry_foreground':'#FFFFFF',
+							'currently_playing':'Now Playing:'
+						},'startup':{
+							'defaultqueue':'none'
+						},'keybindings':{
+							'savequeue':'<Control-s>',
+							'openqueue':'<Control-o>',
+							'enqueue':'<Key q>',
+							'enqueuetop':'<Key-t>',
+							'advancequeue':'<Key-n>'
+						},'modules':{
+							'tablet_mode_enabled':'true'}}
 		master.title("StudioCues")
-		this.doConfigRead()
 		this.writeDefaultConfigValuesIfNotPresent()
-		this.fs = False
-		this.swHeight = 0
-		this.swWidth = 0
-		this.swFS = False
+		this.doConfigRead()
 		this.SlaveWindow = Toplevel(master)
 		this.SlaveWindow.title("StudioCues Slave Window")
 		this.danceQueue = collections.deque()
@@ -26,61 +55,25 @@ class masterWindow:
 		configFile = open('StudioCues.configuration', 'r')
 		this.configuration = configparser.ConfigParser()
 		this.configuration.read_file(configFile)
-		for sect in this.configuration.keys():
-			print(sect,":")
-			for opt in this.configuration[sect].keys():
-				print('    '+opt+': '+this.configuration[sect][opt])
+		#for sect in this.configuration.keys():
+		#	print(sect,":")
+		#	for opt in this.configuration[sect].keys():
+		#		print('    '+opt+': '+this.configuration[sect][opt])
 		configFile.close()
 
 	def writeDefaultConfigValuesIfNotPresent(this): 
-		configFile = open('StudioCues.configuration','w')
-		if not this.configuration.has_section('UI_UX'):
-			this.configuration.add_section('UI_UX')
-		if not this.configuration.has_section('keybindings'):
-			this.configuration.add_section('keybindings')
-		if not this.configuration.has_section('startup'):
-			this.configuration.add_section('startup')
-		if not this.configuration.has_option('startup','defaultQueue'):
-			this.configuration.set('startup','defaultQueue',"none")
-		if not this.configuration.has_option('keybindings','savequeue'):
-			this.configuration.set('keybindings','savequeue','<Control-s>')
-		if not this.configuration.has_option('keybindings','openqueue'):
-			this.configuration.set('keybindings','openqueue','<Control-o>')
-		if not this.configuration.has_option('keybindings','enqueue'):
-			this.configuration.set('keybindings','enqueue','<Key-q>')
-		if not this.configuration.has_option('keybindings','enqueuetop'):
-			this.configuration.set('keybindings','enqueuetop','<Key-t>')
-		if not this.configuration.has_option('keybindings','advanceQueue'):
-			this.configuration.set('keybindings','advanceQueue','<Key-n>')
-		if not this.configuration.has_option('UI_UX','font_family'):
-			this.configuration.set('UI_UX','font_family','Helvetica')
-		if not this.configuration.has_option('UI_UX','currently_playing'):
-			this.configuration.set('UI_UX','currently_playing','Now Playing:')
-		if not this.configuration.has_option('UI_UX','font_size'):
-			this.configuration.set('UI_UX','font_size','110')		
-		if not this.configuration.has_option('UI_UX','font_size_small'):
-			this.configuration.set('UI_UX','font_size_small','80')
-		if not this.configuration.has_option('UI_UX','slave_window_background'):
-			this.configuration.set('UI_UX','slave_window_background','#300A24')
-		if not this.configuration.has_option('UI_UX','slave_window_foreground'):
-			this.configuration.set('UI_UX','slave_window_foreground',"#FFFFFF")
-		if not this.configuration.has_option('UI_UX','slave_window_active_background'):
-			this.configuration.set('UI_UX','slave_window_active_background','#300A24')
-		if not this.configuration.has_option('UI_UX','slave_window_active_foreground'):
-			this.configuration.set('UI_UX','slave_window_active_foreground',"#FFC83D")
-		if not this.configuration.has_option('UI_UX','master_window_background'):
-			this.configuration.set('UI_UX','master_window_background',"#300A24")
-		if not this.configuration.has_option('UI_UX','master_window_foreground'):
-			this.configuration.set('UI_UX','master_window_foreground',"#FFFFFF")		
-		if not this.configuration.has_option('UI_UX','Data_Entry_Background'):
-			this.configuration.set('UI_UX','Data_Entry_Background',"#55113f")
-		if not this.configuration.has_option('UI_UX','Data_Entry_Foreground'):
-			this.configuration.set('UI_UX','Data_Entry_Foreground',"#FFFFFF")
-		for sect in this.configuration.keys():
+		this.configuration = configparser.ConfigParser()
+		for k1 in this.defaultConfigOptions:
+			if not this.configuration.has_section(k1):	
+				this.configuration.add_section(k1)
+			for k2 in this.defaultConfigOptions[k1]:
+				if not this.configuration.has_option(k1, k2):
+					this.configuration.set(k1, k2, this.defaultConfigOptions[k1][k2])
+		for sect in this.configuration:
 			print(sect,":")
-		for opt in this.configuration[sect].keys():
+		for opt in this.configuration[sect]:
 			print('    '+opt+': '+this.configuration[sect][opt])
-		this.configuration.write(configFile)
+		this.writeConfiguration()
 		configFile.close()
 
 	def initSlaveWindow(this):
@@ -128,19 +121,23 @@ class masterWindow:
 		for mon in screeninfo.screeninfo.get_monitors():
 			if mon.x > 0:
 				this.SlaveWindow.overrideredirect(1)
-				this.SlaveWindow.geometry("{0}x{1}+{2}+0".format(mon.width, mon.height, mon.x))
+				this.SlaveWindow.geometry(f"{mon.width}x{mon.height}+{mon.x}+0")
 
-	def getDanceStylesFromFile(self) -> dict:
+	def writeConfiguration(self, location='StudioCues.configuration'):
+		with open(location, 'w+') as configFile:
+			self.configuration.write(configFile)
+
+	def getDanceStylesFromFile(self, file='DanceStyles.list') -> dict:
 		outDictionary = {}
 		iterator = 0
-		dances = open('DanceStyles.list','r')
+		dances = open(file,'r')
 		danceList = dances.read().split('\n')
 		for dance in danceList:
 			outDictionary[iterator] = dance
 			iterator += 1
 		dances.close()
 		return outDictionary
-	##UPDATE
+
 	def addDanceToQueue(this, Dance:str):
 		if this.CurrentDance.get() == "":
 			this.CurrentDance.set(Dance)
@@ -207,9 +204,7 @@ class masterWindow:
 		this.danceQueueLabelText.set(this.createQueueLabelText())
 
 	def registerNewDance(this, Dance:str):
-		index = max(this.MasterDanceList.keys()) + 1
-		this.MasterDanceList[index] = Dance
-		this.DanceListbox.insert(index, Dance)
+		this.registerNewDanceTemp(Dance)
 		with (open('DanceStyles.list','a')) as listFile:
 			listFile.write('\n' + Dance)
 
@@ -226,7 +221,7 @@ class masterWindow:
 
 	def saveCurrentQueue(this):
 		location = this.doFileSavePopup()
-		if not location.lower().endswith('.sc'):
+		if not location.endswith(suffix=('.sc','.SC','.Sc','.sC')):
 			location+='.sc'
 		with open(location, 'w') as queueFile:
 			queueFile.write(this.CurrentDance.get()+'\n')
@@ -245,8 +240,16 @@ class masterWindow:
 			for dance in temp:
 				this.addDanceToQueue(dance)
 
+	def updateDanceList(this):
+		location = this.doFileOpenPopup()
+		this.MasterDanceList = this.getDanceStylesFromFile(location)
+		this.DanceListbox.delete(0,END)
+		for key in this.MasterDanceList.keys():
+			this.DanceListbox.insert(key, this.MasterDanceList[key])
+
+
+
 	def clearDanceQueue(this):
-		##Go through each StringVar and set its value to an empty string, then clear the queue.
 		this.CurrentDance.set('')
 		this.nextDance1.set('')
 		this.nextDance2.set('')
@@ -290,6 +293,7 @@ class masterWindow:
 									  bg=this.configuration['UI_UX']['master_window_background'])
 		this.DanceListboxScroll.pack(side=LEFT,fill=Y)
 		this.DanceListbox = Listbox(this.listArea,
+								font=(this.configuration['UI_UX']['font_family'],this.configuration['UI_UX']['tablet_listbox_font_size' if this.configuration['modules']['tablet_mode_enabled']=='true' else 'listbox_font_size']),
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'],
 								yscrollcommand=this.DanceListboxScroll.set)
@@ -342,12 +346,14 @@ class masterWindow:
 		this.AdvanceDanceButton.pack(side=LEFT, fill=BOTH, expand=1)
 		this.RemoveLastDanceButton.pack(side=LEFT, fill=BOTH, expand=1)
 		this.controlArea.pack(side=TOP,fill=BOTH,expand=0)
+
 	def prep(this, root:Tk):
 		this.createMenuBar(root)
 		this.createDanceRegistrationArea(root)
 		this.createDanceListArea(root)
 		this.createDanceControlArea(root)
 		this.registerKeyCommands(root)
+
 	def registerKeyCommands(this, root:Tk):
 		root.bind(this.configuration['keybindings']['openqueue'], lambda event: this.readQueueFile())
 		root.bind(this.configuration['keybindings']['savequeue'], lambda event: this.saveCurrentQueue())
@@ -363,10 +369,14 @@ class masterWindow:
 
 	def masterWindowRemoveLastAddedDanceCallback(this):
 		this.removeLastAddedDance()
+	
+	def changeDanceListCallback(this):
+		pass
 
 def main():
 	root = Tk()
 	master = masterWindow(root)
 	root.mainloop()
+	master.configuration.write()
 
 main()

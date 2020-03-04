@@ -2,13 +2,15 @@
 font_family = Helvetica
 font_size = 110
 font_size_small = 80
+listbox_font_size = 12
+tablet_listbox_font_size = 40
 slave_window_background = #300A24
 slave_window_foreground = #FFFFFF
 slave_window_active_background = #300A24
 slave_window_active_foreground = #FFC83D
 master_window_background = #300A24
 master_window_foreground = #FFFFFF
-data_entry_background = #55113f
+data_entry_background = #55113F
 data_entry_foreground = #FFFFFF
 currently_playing = Now Playing:
 
@@ -18,7 +20,10 @@ defaultqueue = none
 [keybindings]
 savequeue = <Control-s>
 openqueue = <Control-o>
-enqueue = <Key-q>
+enqueue = <Key q>
 enqueuetop = <Key-t>
 advancequeue = <Key-n>
+
+[modules]
+tablet_mode_enabled = true
 
