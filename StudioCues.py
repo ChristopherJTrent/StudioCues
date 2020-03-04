@@ -74,7 +74,6 @@ class masterWindow:
 		for opt in this.configuration[sect]:
 			print('    '+opt+': '+this.configuration[sect][opt])
 		this.writeConfiguration()
-		configFile.close()
 
 	def initSlaveWindow(this):
 		this.SlaveWindow.geometry("500x500")
@@ -377,6 +376,6 @@ def main():
 	root = Tk()
 	master = masterWindow(root)
 	root.mainloop()
-	master.configuration.write()
+	master.writeConfiguration()
 
 main()
