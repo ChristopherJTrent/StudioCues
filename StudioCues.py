@@ -40,10 +40,10 @@ class masterWindow:
 							'enqueuetop':'<Key-t>',
 							'advancequeue':'<Key-n>'
 						},'modules':{
-							'tablet_mode_enabled':'true'}}
+							'tablet_mode_enabled':'false'}}
 		master.title("StudioCues")
-		this.writeDefaultConfigValuesIfNotPresent()
 		this.doConfigRead()
+		this.writeDefaultConfigValuesIfNotPresent()
 		this.SlaveWindow = Toplevel(master)
 		this.SlaveWindow.title("StudioCues Slave Window")
 		this.danceQueue = collections.deque()
@@ -52,7 +52,7 @@ class masterWindow:
 		this.prep(master)
 
 	def doConfigRead(this):
-		configFile = open('StudioCues.configuration', 'r')
+		configFile = open('StudioCues.configuration', 'r+')
 		this.configuration = configparser.ConfigParser()
 		this.configuration.read_file(configFile)
 		#for sect in this.configuration.keys():
@@ -62,17 +62,12 @@ class masterWindow:
 		configFile.close()
 
 	def writeDefaultConfigValuesIfNotPresent(this): 
-		this.configuration = configparser.ConfigParser()
 		for k1 in this.defaultConfigOptions:
 			if not this.configuration.has_section(k1):	
 				this.configuration.add_section(k1)
 			for k2 in this.defaultConfigOptions[k1]:
 				if not this.configuration.has_option(k1, k2):
 					this.configuration.set(k1, k2, this.defaultConfigOptions[k1][k2])
-		for sect in this.configuration:
-			print(sect,":")
-		for opt in this.configuration[sect]:
-			print('    '+opt+': '+this.configuration[sect][opt])
 		this.writeConfiguration()
 
 	def initSlaveWindow(this):
