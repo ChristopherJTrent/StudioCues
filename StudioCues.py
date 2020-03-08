@@ -3,6 +3,7 @@ from tkinter import filedialog
 import screeninfo
 import configparser
 import collections
+from os import path
 
 class masterWindow:
 	configuration = ""
@@ -36,22 +37,24 @@ class masterWindow:
 						},'keybindings':{
 							'savequeue':'<Control-s>',
 							'openqueue':'<Control-o>',
-							'enqueue':'<Key q>',
+							'enqueue':'<Key-q>',
 							'enqueuetop':'<Key-t>',
 							'advancequeue':'<Key-n>'
 						},'modules':{
 							'tablet_mode_enabled':'false'}}
 		master.title("StudioCues")
-		this.doConfigRead()
-		this.writeDefaultConfigValuesIfNotPresent()
+		if not path.exists('StudioCues.configuration'):
+			open('StudioCues.configuration', 'w+').close()
+		this.__doDefaultConfigRead()
+		this.__writeDefaultConfigValuesIfNotPresent()
 		this.SlaveWindow = Toplevel(master)
 		this.SlaveWindow.title("StudioCues Slave Window")
 		this.danceQueue = collections.deque()
 		this.MasterDanceList = this.getDanceStylesFromFile()
-		this.initSlaveWindow()
+		this.__initSlaveWindow()
 		this.prep(master)
 
-	def doConfigRead(this):
+	def __doDefaultConfigRead(this):
 		configFile = open('StudioCues.configuration', 'r+')
 		this.configuration = configparser.ConfigParser()
 		this.configuration.read_file(configFile)
@@ -61,7 +64,7 @@ class masterWindow:
 		#		print('    '+opt+': '+this.configuration[sect][opt])
 		configFile.close()
 
-	def writeDefaultConfigValuesIfNotPresent(this): 
+	def __writeDefaultConfigValuesIfNotPresent(this): 
 		for k1 in this.defaultConfigOptions:
 			if not this.configuration.has_section(k1):	
 				this.configuration.add_section(k1)
@@ -70,7 +73,7 @@ class masterWindow:
 					this.configuration.set(k1, k2, this.defaultConfigOptions[k1][k2])
 		this.writeConfiguration()
 
-	def initSlaveWindow(this):
+	def __initSlaveWindow(this):
 		this.SlaveWindow.geometry("500x500")
 		this.CurrentDance = StringVar()
 		this.CurrentDanceLabel = Label(this.SlaveWindow,
@@ -122,6 +125,9 @@ class masterWindow:
 			self.configuration.write(configFile)
 
 	def getDanceStylesFromFile(self, file='DanceStyles.list') -> dict:
+		if not path.exists('DanceStyles.list'):
+			open('DanceStyles.list', 'w+').close()
+			return dict()
 		outDictionary = {}
 		iterator = 0
 		dances = open(file,'r')
@@ -182,7 +188,7 @@ class masterWindow:
 			this.CurrentDance.set("")
 		this.updateMasterWindowDanceQueueLabel()
 
-	def createQueueLabelText(this) -> str:
+	def __createQueueLabelText(this) -> str:
 		outputString = ""
 		outputString+= this.configuration['UI_UX']['currently_playing'] + '\n'
 		outputString+= this.CurrentDance.get() + '\n'
@@ -195,26 +201,29 @@ class masterWindow:
 		return outputString
 
 	def updateMasterWindowDanceQueueLabel(this):
-		this.danceQueueLabelText.set(this.createQueueLabelText())
+		this.danceQueueLabelText.set(this.__createQueueLabelText())
 
 	def registerNewDance(this, Dance:str):
 		this.registerNewDanceTemp(Dance)
 		with (open('DanceStyles.list','a')) as listFile:
-			listFile.write('\n' + Dance)
+			listFile.write(Dance + '\n')
 
 	def registerNewDanceTemp(this, Dance:str):
-		index = max(this.MasterDanceList.keys()) + 1
+		if not this.MasterDanceList:
+			index = 0
+		else:
+			index = max(this.MasterDanceList.keys()) + 1
 		this.MasterDanceList[index] = Dance
 		this.DanceListbox.insert(index, Dance)
 
-	def doFileOpenPopup(self, startDir:str = '/', title:str = 'Select a file...', fileTypes:tuple = (('StudioCues Queue files','*.sc'),('All Files','*.*'))) -> str:
+	def __doFileOpenPopup(self, startDir:str = '/', title:str = 'Select a file...', fileTypes:tuple = (('StudioCues Queue files','*.sc'),('All Files','*.*'))) -> str:
 		return filedialog.askopenfilename(initialdir=startDir, title=title,filetypes=fileTypes)	
 
-	def doFileSavePopup(self, startDir:str = '/', title:str = 'Select a file...', fileTypes:tuple = (('StudioCues Queue files','*.sc'),('All Files','*.*'))) -> str:
+	def __doFileSavePopup(self, startDir:str = '/', title:str = 'Select a file...', fileTypes:tuple = (('StudioCues Queue files','*.sc'),('All Files','*.*'))) -> str:
 		return filedialog.asksaveasfilename(initialdir=startDir, title=title,filetypes=fileTypes)
 
 	def saveCurrentQueue(this):
-		location = this.doFileSavePopup()
+		location = this.__doFileSavePopup()
 		if not location.endswith(suffix=('.sc','.SC','.Sc','.sC')):
 			location+='.sc'
 		with open(location, 'w') as queueFile:
@@ -227,7 +236,7 @@ class masterWindow:
 				queueFile.write(v+'\n')
 	
 	def readQueueFile(this):
-		location = this.doFileOpenPopup()
+		location = this.__doFileOpenPopup()
 		with open(location,'r') as IOFile:
 			temp = IOFile.read().split('\n')
 			this.clearDanceQueue()
@@ -235,7 +244,7 @@ class masterWindow:
 				this.addDanceToQueue(dance)
 
 	def updateDanceList(this):
-		location = this.doFileOpenPopup()
+		location = this.__doFileOpenPopup(fileTypes=(('StudioCues Dance List files','*.scd'),('All Files','*.*')))
 		this.MasterDanceList = this.getDanceStylesFromFile(location)
 		this.DanceListbox.delete(0,END)
 		for key in this.MasterDanceList.keys():
@@ -251,15 +260,15 @@ class masterWindow:
 		this.nextDance4.set('')
 		this.danceQueue.clear()
 
-	def createMenuBar(this, root:Tk):
+	def __createMenuBar(this, root:Tk):
 		this.menuBar = Menu(root)
 		this.FileMenu = Menu(this.menuBar, tearoff=0)
-		this.FileMenu.add_command(label='Save Queue',underline=1,command=this.saveCurrentQueue)
+		this.FileMenu.add_command(label='Save Queue',underline=2,command=this.saveCurrentQueue)
 		this.FileMenu.add_command(label='Open Queue',underline=1, command=this.readQueueFile)
 		this.menuBar.add_cascade(label="File",menu=this.FileMenu)
 		root.config(menu=this.menuBar)
 
-	def createDanceRegistrationArea(this, root:Tk):
+	def __createDanceRegistrationArea(this, root:Tk):
 		this.RegisterDanceArea = Frame(root)
 		this.RegisterDanceActionArea = Frame(this.RegisterDanceArea)
 		this.RegisterDanceTextBox = Entry(this.RegisterDanceArea, 
@@ -281,7 +290,7 @@ class masterWindow:
 		this.RegisterDanceActionArea.pack(side=LEFT, fill=BOTH, expand=1)
 		this.RegisterDanceArea.pack(side=TOP, fill=X, expand=0)
 
-	def createDanceListArea(this, root:Tk):
+	def __createDanceListArea(this, root:Tk):
 		this.listArea = Frame(root)
 		this.DanceListboxScroll = Scrollbar(this.listArea,								
 									  bg=this.configuration['UI_UX']['master_window_background'])
@@ -293,24 +302,25 @@ class masterWindow:
 								yscrollcommand=this.DanceListboxScroll.set)
 		this.DanceListboxScroll.config(command=this.DanceListbox.yview)
 		this.danceQueueLabelText = StringVar(root)
-		this.danceQueueLabelText.set(this.createQueueLabelText())
+		this.danceQueueLabelText.set(this.__createQueueLabelText())
 		this.danceQueueLabel = Label(this.listArea, textvariable=this.danceQueueLabelText,
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])
 		for key in this.MasterDanceList.keys():
-			this.DanceListbox.insert(key, this.MasterDanceList[key])
+			if not this.MasterDanceList[key] == "":
+				this.DanceListbox.insert(key, this.MasterDanceList[key])
 		this.DanceListbox.pack(side=LEFT, fill=BOTH,expand=1)
 		this.danceQueueLabel.pack(side=LEFT,fill=BOTH,expand=0)
 		this.listArea.pack(side=TOP,fill=BOTH,expand=1)
 
-	def createDanceControlArea(this, root:Tk):
+	def __createDanceControlArea(this, root:Tk):
 		this.controlArea:Frame = Frame(root)
 		this.addDanceArea:Frame = Frame(this.controlArea)
 		this.AddDanceButton:Button = Button(this.addDanceArea,
 							   text="Add to Queue", 
 							   relief=GROOVE, 
 							   height=7,
-							   command=lambda:this.masterWindowAddDanceCallback(this.DanceListbox.get(ACTIVE)),
+							   command=lambda:this.__masterWindowAddDanceCallback(this.DanceListbox.get(ACTIVE)),
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])		
 		this.AddDanceToTopButton:Button = Button(this.addDanceArea,
@@ -324,14 +334,14 @@ class masterWindow:
 								  text="Next Dance",
 								 relief=GROOVE,
 								height=7,
-								command=this.masterWindowNextDanceCallback,
+								command=this.__masterWindowNextDanceCallback,
 								bg=this.configuration['UI_UX']['master_window_background'],
 								fg=this.configuration['UI_UX']['master_window_foreground'])
 		this.RemoveLastDanceButton = Button(this.controlArea,
 										text="Remove the \nLast Dance",
 										relief=GROOVE,
 										height=7,
-										command=this.masterWindowRemoveLastAddedDanceCallback,
+										command=this.__masterWindowRemoveLastAddedDanceCallback,
 										bg=this.configuration['UI_UX']['master_window_background'],
 										fg=this.configuration['UI_UX']['master_window_foreground'])
 		this.AddDanceToTopButton.pack(side=TOP,fill=BOTH, expand=0)
@@ -342,26 +352,42 @@ class masterWindow:
 		this.controlArea.pack(side=TOP,fill=BOTH,expand=0)
 
 	def prep(this, root:Tk):
-		this.createMenuBar(root)
-		this.createDanceRegistrationArea(root)
-		this.createDanceListArea(root)
-		this.createDanceControlArea(root)
-		this.registerKeyCommands(root)
+		this.__createMenuBar(root)
+		this.__createDanceRegistrationArea(root)
+		this.__createDanceListArea(root)
+		this.__createDanceControlArea(root)
+		this.__registerKeyCommands(root)
 
-	def registerKeyCommands(this, root:Tk):
+	def __registerKeyCommands(this, root:Tk):
 		root.bind(this.configuration['keybindings']['openqueue'], lambda event: this.readQueueFile())
-		root.bind(this.configuration['keybindings']['savequeue'], lambda event: this.saveCurrentQueue())
-		root.bind(this.configuration['keybindings']['enqueue'], lambda event:this.addDanceToQueue(this.DanceListbox.get(this.DanceListbox.curselection())))		
-		root.bind(this.configuration['keybindings']['enqueuetop'], lambda event:this.addDanceToTop(this.DanceListbox.get(this.DanceListbox.curselection())))
+		root.bind(this.configuration['keybindings']['savequeue'], lambda event: this.saveCurrentQueue())	
+		for k in this.configuration['keybindings'].keys():
+			this.RegisterDanceTextBox.bind(this.configuration['keybindings'][k], this.__TextBoxOverrideCallback)
+		root.bind(this.configuration['keybindings']['enqueuetop'], this.__masterWindowEnqueueTopCallback)
+		root.bind(this.configuration['keybindings']['enqueue'], this.__masterWindowAddDanceCallback)
 		root.bind(this.configuration['keybindings']['advanceQueue'], lambda event:this.advanceDanceQueue())
 
-	def masterWindowAddDanceCallback(this, index:int):
-		this.addDanceToQueue(index)
+	def __masterWindowAddDanceCallback(this, event):
+		if this.DanceListbox.curselection == "":
+			return
+		else:
+			this.addDanceToQueue(this.DanceListbox.get(this.DanceListbox.curselection()))
+	
+	def __masterWindowEnqueueTopCallback(this, event):
+		if this.DanceListbox.curselection == "":
+			return
+		else:
+			this.addDanceToTop(this.DanceListbox.get(this.DanceListbox.curselection()))
 
-	def masterWindowNextDanceCallback(this):
+	def __TextBoxOverrideCallback(this, event):
+		print(__name__)
+		if type(event.widget) == type(Entry()):
+			event.widget.insert(len(event.widget.get()), event.char)
+		return 'break'
+	def __masterWindowNextDanceCallback(this):
 		this.advanceDanceQueue()
 
-	def masterWindowRemoveLastAddedDanceCallback(this):
+	def __masterWindowRemoveLastAddedDanceCallback(this):
 		this.removeLastAddedDance()
 	
 	def changeDanceListCallback(this):

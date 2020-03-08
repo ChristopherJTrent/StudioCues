@@ -5,6 +5,6 @@ setup(
 	description="A multi-window text display handler for Dance Studios",
 	url="https://github.com/ChristopherJTrent/StudioCues",
 	author="Christopher Trent",
-	install_requires=['screeninfo'],
+	install_requires=['screeninfo','requests'],
 	zip_safe=False)
 
