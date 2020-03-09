@@ -3,3 +3,6 @@ build/**
 dist/**
 StudioCues.egg-info/**
 StudioCues.configuration
+DanceStyles.list
+*.zip
+keypack.pyu

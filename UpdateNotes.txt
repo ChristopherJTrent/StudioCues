@@ -3,3 +3,5 @@ Added automatic borderless maximization of the secondary window
 Updated the default dance list to include International Standard, International Latin, American Smooth, and American Rhythm dances.
 Version 1.9.0
 Added shortcut keys to enque styles, enque to top, 
+Version 2.0.11
+	Added PyUpdater to workflow. Installation has changed. see README.md
