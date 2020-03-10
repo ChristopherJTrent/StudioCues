@@ -2,14 +2,13 @@ from tkinter import *
 from tkinter import filedialog
 from pyupdater.client import Client
 from client_config import ClientConfig
+from preferenceswindow import PreferencesWindow
 import screeninfo
 import configparser
 import collections
 from os import path
 
 class masterWindow:
-	name='StudioCues'
-	version = "2.0.11"	
 	
 	def doUpdateCheckAndApply(this):
 		def print_status_info(info):
@@ -18,27 +17,23 @@ class masterWindow:
 			status = info.get(u'status')
 			print(downloaded, total, status)
 		client = Client(ClientConfig(), refresh=True, progress_hooks=[print_status_info])
-		app_update=client.update_check(masterWindow.name, masterWindow.version)
-		print(app_update)
+		app_update=client.update_check(ClientConfig.APP_NAME, ClientConfig.APP_VERSION)
+		#print(app_update)
 		if app_update is not None:
-			print('not none')
+			#print('not none')
 			app_update.download()
 			if app_update.is_downloaded():
-				print('isdownloaded')
+				#print('isdownloaded')
 				app_update.extract_restart()
 		else:
-			print('no updates')
+			#print('no updates')
+			pass
 	def __init__(this,master=None):
-		print(masterWindow.version)
+		if master is None:
+			this.master = Tk()
+		else:
+			this.master = master
 		this.doUpdateCheckAndApply()
-		print(masterWindow.version)
-		this.SlaveWindowDanceLists = {
-							    'current':{'content': StringVar(),'locked':False},
-								'next1':{'content':StringVar(),'locked':False},
-								'next2':{'content':StringVar(),'locked':False},
-								'next3':{'content':StringVar(),'locked':False},
-								'next4':{'content': StringVar(),'locked':False}}
-
 		this.defaultConfigOptions = {'UI_UX':{
 							'font_family':'Helvetica',
 							'font_size':'110',
@@ -55,7 +50,8 @@ class masterWindow:
 							'data_entry_foreground':'#FFFFFF',
 							'currently_playing':'Now Playing:'
 						},'startup':{
-							'defaultqueue':'none'
+							'defaultqueue':'none',
+							'PreferencesLocation':'cfg/StudioCuesDefault.configuration',
 						},'keybindings':{
 							'savequeue':'<Control-s>',
 							'openqueue':'<Control-o>',
@@ -64,27 +60,41 @@ class masterWindow:
 							'advancequeue':'<Key-n>'
 						},'modules':{
 							'tablet_mode_enabled':'false'}}
-		master.title("StudioCues")
-		if not path.exists('StudioCues.configuration'):
-			open('StudioCues.configuration', 'w+').close()
-		this.__doDefaultConfigRead()
+		
+		if not path.exists(this.defaultConfigOptions['startup']['PreferencesLocation']):
+			open(this.defaultConfigOptions['startup']['PreferencesLocation'], 'w+').close()
+		this.configuration = configparser.ConfigParser()	
 		this.__writeDefaultConfigValuesIfNotPresent()
-		this.SlaveWindow = Toplevel(master)
-		this.SlaveWindow.title("StudioCues Slave Window")
+		this.__doConfigRead()
 		this.danceQueue = collections.deque()
 		this.MasterDanceList = this.getDanceStylesFromFile()
-		this.__initSlaveWindow()
-		this.prep(master)
+		this.prep(this.master)
 
-	def __doDefaultConfigRead(this):
-		configFile = open('StudioCues.configuration', 'r+')
+	def __doConfigRead(this):
+		configFile = open(this.defaultConfigOptions['startup']['PreferencesLocation'], 'r')
 		this.configuration = configparser.ConfigParser()
 		this.configuration.read_file(configFile)
+		if this.configuration.has_section('startup'):
+			if this.configuration.has_option('startup','PreferencesLocation'):
+				if this.configuration['startup']['PreferencesLocation'] != this.defaultConfigOptions['startup']['PreferencesLocation']:
+					try:
+						with open(this.configuration['startup']['PreferencesLocation']) as INIFile:
+							this.configuration.clear()
+							this.configuration.read_file(INIFile)
+					except:
+						pass
+		configFile.close()
 		#for sect in this.configuration.keys():
 		#	print(sect,":")
 		#	for opt in this.configuration[sect].keys():
 		#		print('    '+opt+': '+this.configuration[sect][opt])
-		configFile.close()
+
+	def moveConfig(this, location):
+		with open(this.defaultConfigOptions['startup']['PreferencesLocation']) as defCFG:
+			tempConfig = configparser.ConfigParser()
+			tempConfig.read_file(defCFG)
+			tempConfig['startup']['PreferencesLocation'] = location
+			tempConfig.write(defCFG)
 
 	def __writeDefaultConfigValuesIfNotPresent(this): 
 		for k1 in this.defaultConfigOptions:
@@ -142,7 +152,9 @@ class masterWindow:
 				this.SlaveWindow.overrideredirect(1)
 				this.SlaveWindow.geometry(f"{mon.width}x{mon.height}+{mon.x}+0")
 
-	def writeConfiguration(self, location='StudioCues.configuration'):
+	def writeConfiguration(self, location=None):
+		if location is None:
+			location = self.defaultConfigOptions['startup']['PreferencesLocation']
 		with open(location, 'w+') as configFile:
 			self.configuration.write(configFile)
 
@@ -161,6 +173,8 @@ class masterWindow:
 		return outDictionary
 
 	def addDanceToQueue(this, Dance:str):
+		if Dance == '':
+			return
 		if this.CurrentDance.get() == "":
 			this.CurrentDance.set(Dance)
 		elif this.nextDance1.get() == "":
@@ -176,6 +190,8 @@ class masterWindow:
 		this.updateMasterWindowDanceQueueLabel()
 
 	def addDanceToTop(this, Dance:str):
+		if Dance == '':
+			return
 		this.danceQueue.appendleft(this.nextDance4.get())
 		this.nextDance4.set(this.nextDance3.get())
 		this.nextDance3.set(this.nextDance2.get())
@@ -211,6 +227,11 @@ class masterWindow:
 		this.updateMasterWindowDanceQueueLabel()
 
 	def __createQueueLabelText(this) -> str:
+		while True:
+			try:
+				this.danceQueue.remove('')
+			except ValueError:
+				break
 		outputString = ""
 		outputString+= this.configuration['UI_UX']['currently_playing'] + '\n'
 		outputString+= this.CurrentDance.get() + '\n'
@@ -246,9 +267,11 @@ class masterWindow:
 
 	def saveCurrentQueue(this):
 		location = this.__doFileSavePopup()
-		if not location.endswith(suffix=('.sc','.SC','.Sc','.sC')):
+		this._saveCurrentQueue(location)
+	def _saveCurrentQueue(this, location, mode='w+'):
+		if not location.lower().endswith('.sc'):
 			location+='.sc'
-		with open(location, 'w') as queueFile:
+		with open(location, mode) as queueFile:
 			queueFile.write(this.CurrentDance.get()+'\n')
 			queueFile.write(this.nextDance1.get()+'\n')
 			queueFile.write(this.nextDance2.get()+'\n')
@@ -256,15 +279,14 @@ class masterWindow:
 			queueFile.write(this.nextDance4.get()+'\n')
 			for v in this.danceQueue:
 				queueFile.write(v+'\n')
-	
 	def readQueueFile(this):
 		location = this.__doFileOpenPopup()
-		with open(location,'r') as IOFile:
+	def _readQueueFile(this, location, mode='r'):
+		with open(location,mode) as IOFile:
 			temp = IOFile.read().split('\n')
 			this.clearDanceQueue()
 			for dance in temp:
 				this.addDanceToQueue(dance)
-
 	def updateDanceList(this):
 		location = this.__doFileOpenPopup(fileTypes=(('StudioCues Dance List files','*.scd'),('All Files','*.*')))
 		this.MasterDanceList = this.getDanceStylesFromFile(location)
@@ -288,6 +310,7 @@ class masterWindow:
 		this.FileMenu.add_command(label='Save Queue',underline=2,command=this.saveCurrentQueue)
 		this.FileMenu.add_command(label='Open Queue',underline=1, command=this.readQueueFile)
 		this.menuBar.add_cascade(label="File",menu=this.FileMenu)
+		this.menuBar.add_command(label = 'Preferences', command=this.openPreferencesCallback)
 		root.config(menu=this.menuBar)
 
 	def __createDanceRegistrationArea(this, root:Tk):
@@ -374,12 +397,24 @@ class masterWindow:
 		this.controlArea.pack(side=TOP,fill=BOTH,expand=0)
 
 	def prep(this, root:Tk):
+		this.configWindow = None
+		this.master.title(f"StudioCues V.{ClientConfig.APP_VERSION}")
+		this.SlaveWindow = Toplevel(this.master)
+		this.SlaveWindow.title("StudioCues Slave Window")
+		this.__initSlaveWindow()
 		this.__createMenuBar(root)
 		this.__createDanceRegistrationArea(root)
 		this.__createDanceListArea(root)
 		this.__createDanceControlArea(root)
 		this.__registerKeyCommands(root)
 
+	def reload(self):
+		self._saveCurrentQueue('temp.sc')
+		root = self.master
+		for widget in root.winfo_children():
+			widget.destroy()
+		self.prep(root)
+		self._readQueueFile('temp.sc')
 	def __registerKeyCommands(this, root:Tk):
 		root.bind(this.configuration['keybindings']['openqueue'], lambda event: this.readQueueFile())
 		root.bind(this.configuration['keybindings']['savequeue'], lambda event: this.saveCurrentQueue())	
@@ -402,7 +437,7 @@ class masterWindow:
 			this.addDanceToTop(this.DanceListbox.get(this.DanceListbox.curselection()))
 
 	def __TextBoxOverrideCallback(this, event):
-		print(__name__)
+		#print(__name__)
 		if type(event.widget) == type(Entry()):
 			event.widget.insert(len(event.widget.get()), event.char)
 		return 'break'
@@ -415,10 +450,15 @@ class masterWindow:
 	def changeDanceListCallback(this):
 		pass
 
+	def openPreferencesCallback(self, event=None):
+		if self.configWindow is None:
+			self.configWindow = PreferencesWindow(self.master, self.configuration, self)
+		else:
+			self.configWindow.show()
+
 def main():
-	root = Tk()
-	master = masterWindow(root)
-	root.mainloop()
+	master = masterWindow()
+	master.master.mainloop()
 	master.writeConfiguration()
 
 main()

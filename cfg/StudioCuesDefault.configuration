@@ -12,7 +12,7 @@ master_window_background = #300A24
 master_window_foreground = #FFFFFF
 data_entry_background = #55113F
 data_entry_foreground = #FFFFFF
-currently_playing = Now Playing:
+currently_playing = Test
 
 [startup]
 defaultqueue = none
